@@ -31,7 +31,6 @@
 #include "rosbag/view.h"
 
 #include <inttypes.h>
-#include <signal.h>
 
 #include <iomanip>
 

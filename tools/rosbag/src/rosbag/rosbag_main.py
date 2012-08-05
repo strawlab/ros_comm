@@ -35,7 +35,6 @@ import roslib; roslib.load_manifest('rosbag')
 import optparse
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import time
