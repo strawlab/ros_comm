@@ -225,7 +225,7 @@ bool Recorder::shouldSubscribeToTopic(std::string const& topic, bool from_node) 
     if(options_.record_all || from_node) {
         return true;
     }
-    
+
     if (options_.regex) {
         // Treat the topics as regular expressions
         foreach(string const& regex_str, options_.topics) {
@@ -240,7 +240,7 @@ bool Recorder::shouldSubscribeToTopic(std::string const& topic, bool from_node) 
             if (t == topic)
                 return true;
     }
-    
+
     return false;
 }
 
@@ -257,18 +257,18 @@ std::string Recorder::timeToStr(T ros_t) {
 void Recorder::doQueue(ros::MessageEvent<topic_tools::ShapeShifter const> msg_event, string const& topic, shared_ptr<ros::Subscriber> subscriber, shared_ptr<int> count) {
     //void Recorder::doQueue(topic_tools::ShapeShifter::ConstPtr msg, string const& topic, shared_ptr<ros::Subscriber> subscriber, shared_ptr<int> count) {
     Time rectime = Time::now();
-    
+
     if (options_.verbose)
         cout << "Received message on topic " << subscriber->getTopic() << endl;
 
     OutgoingMessage out(topic, msg_event.getMessage(), msg_event.getConnectionHeaderPtr(), rectime);
-    
+
     {
         boost::mutex::scoped_lock lock(queue_mutex_);
 
         queue_->push(out);
         queue_size_ += out.msg->size();
-        
+
         // Check to see if buffer has been exceeded
         while (options_.buffer_size > 0 && queue_size_ > options_.buffer_size) {
             OutgoingMessage drop = queue_->front();
@@ -284,7 +284,7 @@ void Recorder::doQueue(ros::MessageEvent<topic_tools::ShapeShifter const> msg_ev
             }
         }
     }
-  
+
     if (!options_.snapshot)
         queue_condition_.notify_all();
 
@@ -332,9 +332,9 @@ void Recorder::updateFilenames() {
 //! Callback to be invoked to actually do the recording
 void Recorder::snapshotTrigger(std_msgs::Empty::ConstPtr trigger) {
     updateFilenames();
-    
+
     ROS_INFO("Triggered snapshot recording with name %s.", target_filename_.c_str());
-    
+
     {
         boost::mutex::scoped_lock lock(queue_mutex_);
         queue_queue_.push(OutgoingQueue(target_filename_, queue_, Time::now()));
@@ -451,9 +451,9 @@ void Recorder::doRecord() {
         OutgoingMessage out = queue_->front();
         queue_->pop();
         queue_size_ -= out.msg->size();
-        
+
         lock.release()->unlock();
-        
+
         if (checkSize())
             break;
 
@@ -469,7 +469,7 @@ void Recorder::doRecord() {
 
 void Recorder::doRecordSnapshotter() {
     ros::NodeHandle nh;
-  
+
     while (nh.ok() || !queue_queue_.empty()) {
         boost::unique_lock<boost::mutex> lock(queue_mutex_);
         while (queue_queue_.empty()) {
@@ -477,15 +477,15 @@ void Recorder::doRecordSnapshotter() {
                 return;
             queue_condition_.wait(lock);
         }
-        
+
         OutgoingQueue out_queue = queue_queue_.front();
         queue_queue_.pop();
-        
+
         lock.release()->unlock();
-        
+
         string target_filename = out_queue.filename;
         string write_filename  = target_filename + string(".active");
-        
+
         try {
             bag_.open(write_filename, bagmode::Write);
         }
@@ -513,7 +513,7 @@ void Recorder::doCheckMaster(ros::TimerEvent const& e, ros::NodeHandle& node_han
 				subscribe(t.name);
 		}
     }
-    
+
     if (options_.node != std::string(""))
     {
 
@@ -538,7 +538,7 @@ void Recorder::doCheckMaster(ros::TimerEvent const& e, ros::NodeHandle& node_han
           XmlRpc::XmlRpcValue resp;
           req[0] = ros::this_node::getName();
           c.execute("getSubscriptions", req, resp);
-          
+
           if (!c.isFault() && resp.size() > 0 && static_cast<int>(resp[0]) == 1)
           {
             for(int i = 0; i < resp[2].size(); i++)

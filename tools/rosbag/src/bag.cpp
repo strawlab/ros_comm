@@ -1,9 +1,9 @@
 // Copyright (c) 2009, Willow Garage, Inc.
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 //     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
 //     * Neither the name of Willow Garage, Inc. nor the names of its
 //       contributors may be used to endorse or promote products derived from
 //       this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -152,7 +152,7 @@ void Bag::close() {
 
     if (mode_ & bagmode::Write || mode_ & bagmode::Append)
     	closeWrite();
-    
+
     file_.close();
 
     topic_connection_ids_.clear();
@@ -320,7 +320,7 @@ void Bag::writeFileHeaderRecord() {
 
     ROS_DEBUG("Writing FILE_HEADER [%llu]: index_pos=%llu connection_count=%d chunk_count=%d",
               (unsigned long long) file_.getOffset(), (unsigned long long) index_data_pos_, connection_count_, chunk_count_);
-    
+
     // Write file header record
     M_string header;
     header[OP_FIELD_NAME]               = toHeaderString(&OP_FILE_HEADER);
@@ -337,7 +337,7 @@ void Bag::writeFileHeaderRecord() {
     write((char*) &header_len, 4);
     write((char*) header_buffer.get(), header_len);
     write((char*) &data_len, 4);
-    
+
     // Pad the file header record out
     if (data_len > 0) {
         string padding;
@@ -394,7 +394,7 @@ void Bag::startWritingChunk(Time time) {
 
     // Turn on compressed writing
     file_.setWriteMode(compression_);
-    
+
     // Record where the data section of this chunk started
     curr_chunk_data_pos_ = file_.getOffset();
 
@@ -404,7 +404,7 @@ void Bag::startWritingChunk(Time time) {
 void Bag::stopWritingChunk() {
     // Add this chunk to the index
     chunks_.push_back(curr_chunk_info_);
-    
+
     // Get the uncompressed and compressed sizes
     uint32_t uncompressed_size = getChunkOffset();
     file_.setWriteMode(compression::Uncompressed);
@@ -423,7 +423,7 @@ void Bag::stopWritingChunk() {
 
     // Clear the connection counts
     curr_chunk_info_.connection_counts.clear();
-    
+
     // Flag that we're starting a new chunk
     chunk_open_ = false;
 }
@@ -454,7 +454,7 @@ void Bag::readChunkHeader(ChunkHeader& chunk_header) const {
     ros::Header header;
     if (!readHeader(header) || !readDataLength(chunk_header.compressed_size))
         throw BagFormatException("Error reading CHUNK record");
-        
+
     M_string& fields = *header.getValues();
 
     if (!isOp(fields, OP_CHUNK))
@@ -565,10 +565,10 @@ void Bag::readConnectionIndexRecord200() {
     if (!readHeader(header) || !readDataLength(data_size))
         throw BagFormatException("Error reading INDEX_DATA header");
     M_string& fields = *header.getValues();
-    
+
     if (!isOp(fields, OP_INDEX_DATA))
         throw BagFormatException("Expected INDEX_DATA record");
-    
+
     uint32_t index_version;
     uint32_t connection_id;
     uint32_t count = 0;
@@ -744,7 +744,7 @@ void Bag::decompressChunk(uint64_t chunk_pos) const {
         decompressBz2Chunk(chunk_header);
     else
         throw BagFormatException("Unknown compression: " + chunk_header.compression);
-    
+
     decompressed_chunk_ = chunk_pos;
 }
 
@@ -992,7 +992,7 @@ void Bag::readMessageDataHeaderFromBuffer(Buffer& buffer, uint32_t offset, ros::
 
         offset += bytes_read;
         total_bytes_read += bytes_read;
-        
+
         readField(*header.getValues(), OP_FIELD_NAME, true, &op);
     }
     while (op == OP_MSG_DEF || op == OP_CONNECTION);

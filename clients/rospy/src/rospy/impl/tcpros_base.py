@@ -48,7 +48,7 @@ try:
     import _thread
 except ImportError:
     import thread as _thread
-    
+
 import threading
 import time
 import traceback
@@ -73,7 +73,7 @@ logger = logging.getLogger('rospy.tcpros')
 DEFAULT_BUFF_SIZE = 65536
 
 ## name of our customized TCP protocol for accepting flows over server socket
-TCPROS = "TCPROS" 
+TCPROS = "TCPROS"
 
 _PARAM_TCP_KEEPALIVE = '/tcp_keepalive'
 _use_tcp_keepalive = None
@@ -90,7 +90,7 @@ def _is_use_tcp_keepalive():
         m = rospy.core.xmlrpcapi(roslib.rosenv.get_master_uri())
         code, msg, val = m.getParam(rospy.names.get_caller_id(), _PARAM_TCP_KEEPALIVE)
         _use_tcp_keepalive = val if code == 1 else True
-        return _use_tcp_keepalive 
+        return _use_tcp_keepalive
 
 def recv_buff(sock, b, buff_size):
     """
@@ -141,7 +141,7 @@ class TCPServer(object):
     def start(self):
         """Runs the run() loop in a separate thread"""
         _thread.start_new_thread(self.run, ())
-        
+
     def run(self):
         """
         Main TCP receive loop. Should be run in a separate thread -- use start()
@@ -171,7 +171,7 @@ class TCPServer(object):
                     logwarn("Failed to handle inbound connection due to socket error: %s"%e)
         logdebug("TCPServer[%s] shutting down", self.port)
 
-    
+
     def get_full_addr(self):
         """
         @return: (ip address, port) of server socket binding
@@ -180,7 +180,7 @@ class TCPServer(object):
         # return roslib.network.get_host_name() instead of address so that it
         # obeys ROS_IP/ROS_HOSTNAME behavior
         return (roslib.network.get_host_name(), self.port)
-    
+
     def _create_server_sock(self):
         """
         binds the server socket. ROS_IP/ROS_HOSTNAME may restrict
@@ -211,7 +211,7 @@ def init_tcpros_server():
         _tcpros_server = TCPROSServer()
         rospy.core.add_shutdown_hook(_tcpros_server.shutdown)
     return _tcpros_server
-    
+
 def start_tcpros_server():
     """
     start the TCPROS server if it has not started already
@@ -248,16 +248,16 @@ class TCPROSServer(object):
     socket is run once start_server() is called -- this is implicitly
     called during init_publisher().
     """
-    
+
     def __init__(self):
         """ctor."""
         self.tcp_ros_server = None #: server for receiving tcp conn
         self.lock = threading.Lock()
         # should be set to fn(sock, client_addr, header) for topic connections
         self.topic_connection_handler = _error_connection_handler
-        # should be set to fn(sock, client_addr, header) for service connections        
+        # should be set to fn(sock, client_addr, header) for service connections
         self.service_connection_handler = _error_connection_handler
-        
+
     def start_server(self, port=0):
         """
         Starts the TCP socket server if one is not already running
@@ -269,13 +269,13 @@ class TCPROSServer(object):
         with self.lock:
             try:
                 if not self.tcp_ros_server:
-                    self.tcp_ros_server = TCPServer(self._tcp_server_callback, port) 
+                    self.tcp_ros_server = TCPServer(self._tcp_server_callback, port)
                     self.tcp_ros_server.start()
             except Exception as e:
                 self.tcp_ros_server = None
                 logerr("unable to start TCPROS server: %s\n%s"%(e, traceback.format_exc()))
                 return 0, "unable to establish TCPROS server: %s"%e, []
-    
+
     def get_address(self):
         """
         @return: address and port of TCP server socket for accepting
@@ -285,7 +285,7 @@ class TCPROSServer(object):
         if self.tcp_ros_server is not None:
             return self.tcp_ros_server.get_full_addr()
         return None, None
-    
+
     def shutdown(self, reason=''):
         """stops the TCP/IP server responsible for receiving inbound connections"""
         if self.tcp_ros_server:
@@ -294,7 +294,7 @@ class TCPROSServer(object):
     def _tcp_server_callback(self, sock, client_addr):
         """
         TCPServer callback: detects incoming topic or service connection and passes connection accordingly
-    
+
         @param sock: socket connection
         @type  sock: socket.socket
         @param client_addr: client address
@@ -306,11 +306,11 @@ class TCPROSServer(object):
         try:
             buff_size = 4096 # size of read buffer
             if python3 == 0:
-                #initialize read_ros_handshake_header with BytesIO for Python 3 (instead of bytesarray())    
+                #initialize read_ros_handshake_header with BytesIO for Python 3 (instead of bytesarray())
                 header = read_ros_handshake_header(sock, StringIO(), buff_size)
             else:
                 header = read_ros_handshake_header(sock, BytesIO(), buff_size)
-            
+
             if 'topic' in header:
                 err_msg = self.topic_connection_handler(sock, client_addr, header)
             elif 'service' in header:
@@ -320,7 +320,7 @@ class TCPROSServer(object):
             if err_msg:
                 # shutdown race condition: nodes that come up and down
                 # quickly can receive connections during teardown.
-                
+
                 # We use is_shutdown_requested() because we can get
                 # into bad connection states during client shutdown
                 # hooks.
@@ -368,11 +368,11 @@ class TCPROSTransportProtocol(object):
         self.queue_size = queue_size
         self.buff_size = buff_size
         self.direction = BIDIRECTIONAL
-        
-    
+
+
     def read_messages(self, b, msg_queue, sock):
         """
-        @param b StringIO: read buffer        
+        @param b StringIO: read buffer
         @param msg_queue [Message]: queue of deserialized messages
         @type  msg_queue: [Message]
         @param sock socket: protocol can optionally read more data from
@@ -381,7 +381,7 @@ class TCPROSTransportProtocol(object):
         """
         # default implementation
         deserialize_messages(b, msg_queue, self.recv_data_class, queue_size=self.queue_size)
-        
+
     def get_header_fields(self):
         """
         Header fields that should be sent over the connection. The header fields
@@ -406,12 +406,12 @@ class TCPROSTransport(Transport):
     Generic implementation of TCPROS exchange routines for both topics and services
     """
     transport_type = 'TCPROS'
-    
+
     def __init__(self, protocol, name, header=None):
         """
         ctor
         @param name str: identifier
-        @param protocol TCPROSTransportProtocol protocol implementation    
+        @param protocol TCPROSTransportProtocol protocol implementation
         @param header dict: (optional) handshake header if transport handshake header was
         already read off of transport.
         @raise TransportInitError if transport cannot be initialized according to arguments
@@ -425,27 +425,27 @@ class TCPROSTransport(Transport):
         self.socket = None
         self.endpoint_id = 'unknown'
         self.dest_address = None # for reconnection
-        
+
         if python3 == 0: # Python 2.x
             self.read_buff = StringIO()
             self.write_buff = StringIO()
         else: # Python 3.x
             self.read_buff = BytesIO()
             self.write_buff = BytesIO()
-                    	    
+
         #self.write_buff = StringIO()
         self.header = header
 
         # #1852 have to hold onto latched messages on subscriber side
         self.is_latched = False
         self.latch = None
-        
+
         # these fields are actually set by the remote
         # publisher/service. they are set for tools that connect
         # without knowing the actual field name
         self.md5sum = None
-        self.type = None 
-            
+        self.type = None
+
     def set_socket(self, sock, endpoint_id):
         """
         Set the socket for this transport
@@ -468,7 +468,7 @@ class TCPROSTransport(Transport):
         @param dest_addr: destination IP address
         @type  dest_addr: str
         @param dest_port: destination port
-        @type  dest_port: int                
+        @type  dest_port: int
         @param endpoint_id: string identifier for connection (for statistics)
         @type  endpoint_id: str
         @param timeout: (optional keyword) timeout in seconds
@@ -478,7 +478,7 @@ class TCPROSTransport(Transport):
         try:
             self.endpoint_id = endpoint_id
             self.dest_address = (dest_addr, dest_port)
-            
+
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if _is_use_tcp_keepalive():
                 # OSX (among others) does not define these options
@@ -500,7 +500,7 @@ class TCPROSTransport(Transport):
             self.write_header()
             self.read_header()
         except TransportInitError as tie:
-            rospyerr("Unable to initiate TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exc()))            
+            rospyerr("Unable to initiate TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exc()))
             raise
         except Exception as e:
             # FATAL: no reconnection as error is unknown
@@ -513,11 +513,11 @@ class TCPROSTransport(Transport):
                 finally:
                     self.socket.close()
             self.socket = None
-            
+
             #logerr("Unknown error initiating TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, str(e)))
-            rospywarn("Unknown error initiating TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exc()))            
+            rospywarn("Unknown error initiating TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exc()))
             raise TransportInitError(str(e)) #re-raise i/o error
-                
+
     def _validate_header(self, header):
         """
         Validate header and initialize fields accordingly
@@ -555,7 +555,7 @@ class TCPROSTransport(Transport):
         """
         self.socket.setblocking(1)
         self._validate_header(read_ros_handshake_header(self.socket, self.read_buff, self.protocol.buff_size))
-                
+
     def send_message(self, msg, seq):
         """
         Convenience routine for services to send a message across a
@@ -604,16 +604,16 @@ class TCPROSTransport(Transport):
                 self.close()
                 raise TransportTerminated(msg)
             elif errno == 104: #connection reset by peer
-                logdebug("[%s]: Peer [%s] has closed connection", self.name, self.endpoint_id) 
+                logdebug("[%s]: Peer [%s] has closed connection", self.name, self.endpoint_id)
                 self.close()
                 raise TransportTerminated(msg)
             else:
                 rospydebug("unknown socket error writing data: %s",traceback.format_exc())
-                logdebug("[%s]: closing connection [%s] due to unknown socket error: %s", self.name, self.endpoint_id, msg) 
+                logdebug("[%s]: closing connection [%s] due to unknown socket error: %s", self.name, self.endpoint_id, msg)
                 self.close()
-                raise TransportTerminated(str(errno)+' '+msg)                
+                raise TransportTerminated(str(errno)+' '+msg)
         return True
-    
+
     def receive_once(self):
         """
         block until messages are read off of socket
@@ -628,25 +628,25 @@ class TCPROSTransport(Transport):
         msg_queue = []
         p = self.protocol
         try:
-            sock.setblocking(1)                
+            sock.setblocking(1)
             while not msg_queue and not self.done and not is_shutdown():
                 if b.tell() >= 4:
-                    p.read_messages(b, msg_queue, sock) 
+                    p.read_messages(b, msg_queue, sock)
                 if not msg_queue:
                     recv_buff(sock, b, p.buff_size)
             self.stat_num_msg += len(msg_queue) #STATS
             # set the _connection_header field
             for m in msg_queue:
                 m._connection_header = self.header
-                
+
             # #1852: keep track of last latched message
             if self.is_latched and msg_queue:
                 self.latch = msg_queue[-1]
-            
+
             return msg_queue
 
         except DeserializationError as e:
-            rospyerr(traceback.format_exc())            
+            rospyerr(traceback.format_exc())
             raise TransportException("receive_once[%s]: DeserializationError %s"%(self.name, str(e)))
         except TransportTerminated as e:
             raise #reraise
@@ -656,7 +656,7 @@ class TCPROSTransport(Transport):
             rospyerr(traceback.format_exc())
             raise TransportException("receive_once[%s]: unexpected error %s"%(self.name, str(e)))
         return retval
-        
+
     def _reconnect(self):
         # This reconnection logic is very hacky right now.  I need to
         # rewrite the I/O core so that this is handled more centrally.
@@ -674,17 +674,17 @@ class TCPROSTransport(Transport):
                 self.connect(self.dest_address[0], self.dest_address[1], self.endpoint_id, timeout=30.)
             except TransportInitError:
                 self.socket = None
-                
+
             if self.socket is None:
                 # exponential backoff
                 interval = interval * 2
-                
+
             time.sleep(interval)
 
     def receive_loop(self, msgs_callback):
         """
         Receive messages until shutdown
-        @param msgs_callback: callback to invoke for new messages received    
+        @param msgs_callback: callback to invoke for new messages received
         @type  msgs_callback: fn([msg])
         """
         # - use assert here as this would be an internal error, aka bug
@@ -715,7 +715,7 @@ class TCPROSTransport(Transport):
 
                 except DeserializationError as e:
                     #TODO: how should we handle reconnect in this case?
-                    
+
                     logerr("[%s] error deserializing incoming request: %s"%self.name, str(e))
                     rospyerr("[%s] error deserializing incoming request: %s"%self.name, traceback.format_exc())
                 except:
@@ -724,10 +724,10 @@ class TCPROSTransport(Transport):
                         #1467 sometimes we get exceptions due to
                         #interpreter shutdown, so blanket ignore those if
                         #the reporting fails
-                        rospydebug("exception in receive loop for [%s], may be normal. Exception is %s",self.name, traceback.format_exc())                    
+                        rospydebug("exception in receive loop for [%s], may be normal. Exception is %s",self.name, traceback.format_exc())
                     except: pass
-                    
-            rospydebug("receive_loop[%s]: done condition met, exited loop"%self.name)                    
+
+            rospydebug("receive_loop[%s]: done condition met, exited loop"%self.name)
         finally:
             if not self.done:
                 self.close()
