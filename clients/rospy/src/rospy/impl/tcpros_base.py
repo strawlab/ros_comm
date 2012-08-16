@@ -502,21 +502,29 @@ class TCPROSTransport(Transport):
         except TransportInitError as tie:
             rospyerr("Unable to initiate TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exc()))
             raise
-        except Exception as e:
+        except Exception as e1:
+            (type1, value1, traceback1) = sys.exc_info()
+            assert type1 == type(e1)
+            assert value1 == e1
             # FATAL: no reconnection as error is unknown
             self.done = True
             if self.socket:
                 try:
                     self.socket.shutdown(socket.SHUT_RDWR)
-                except:
-                    pass
+                except Exception as e2:
+                    (type2, value2, traceback2) = sys.exc_info()
+                    assert type2 == type(e2)
+                    assert value2 == e2
+                    rospywarn("Error shutting down socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exception(
+                        type2, value2, traceback2)))
                 finally:
                     self.socket.close()
             self.socket = None
 
             #logerr("Unknown error initiating TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, str(e)))
-            rospywarn("Unknown error initiating TCP/IP socket to %s:%s (%s): %s"%(dest_addr, dest_port, endpoint_id, traceback.format_exc()))
-            raise TransportInitError(str(e)) #re-raise i/o error
+            rospywarn("Unknown error initiating TCP/IP socket to %s:%s (%s): %s"%(dest_addr,dest_port,endpoint_id,traceback.format_exception(
+                type1, value1, traceback1)))
+            raise TransportInitError(str(e1)) #re-raise i/o error
 
     def _validate_header(self, header):
         """
