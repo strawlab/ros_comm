@@ -42,6 +42,7 @@ except ImportError:
     from io import StringIO, BytesIO #Python 3.x
     python3 = 1
 import socket
+import errno
 import logging
 
 try:
@@ -104,7 +105,14 @@ def recv_buff(sock, b, buff_size):
     @return: number of bytes read
     @rtype: int
     """
-    d = sock.recv(buff_size)
+    while 1:
+        try:
+            d = sock.recv(buff_size)
+            break
+        except socket.Exception as err:
+            if hasattr(err,'errno') and err.errno == errno.EINTR:
+                continue
+            raise
     if d:
         b.write(d)
         return len(d)
